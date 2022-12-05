@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -62,11 +63,10 @@ public class UserMealsUtil {
                 .filter(m -> TimeUtil.isBetweenHalfOpen(m.getDateTime().toLocalTime(), startTime, endTime))
                 .sorted(Comparator.comparing(UserMeal::getDateTime))
                 .map(dish -> {
-                    if (meals.stream()
-                            .filter(m -> m.getDateTime().toLocalDate().equals(dish.getDateTime().toLocalDate()))
-                            .mapToInt(UserMeal::getCalories)
-                            .summaryStatistics()
-                            .getSum() > caloriesPerDay)
+                    if(meals.stream()
+                            .collect(Collectors.groupingBy(m -> m.getDateTime().toLocalDate(),
+                                    Collectors.summingInt(UserMeal::getCalories)))
+                            .get(dish.getDateTime().toLocalDate()) > caloriesPerDay)
                         return new UserMealWithExcess(dish.getDateTime(), dish.getDescription(), dish.getCalories(), true);
                     else
                         return new UserMealWithExcess(dish.getDateTime(), dish.getDescription(), dish.getCalories(), false);
